@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gerenciador de Links</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f4f4f4; }
+        .status-on { color: green; font-weight: bold; }
+        .status-off { color: red; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Gerenciador de Links</h1>
+    <form id="add-link-form">
+        <input type="text" id="url" placeholder="Digite a URL" required>
+        <button type="submit">Adicionar Link</button>
+    </form>
+    <table>
+        <thead>
+            <tr>
+                <th>Link</th>
+                <th>Status</th>
+                <th>Ações</th>
+            </tr>
+        </thead>
+        <tbody id="links-table">
+        </tbody>
+    </table>
+
+    <script>
+        const links = [];
+
+        async function checkStatus(url) {
+            try {
+                const response = await fetch(url, { method: 'HEAD' });
+                return response.ok ? 'On' : 'Off';
+            } catch {
+                return 'Off';
+            }
+        }
+
+        async function refreshLinks() {
+            const table = document.getElementById('links-table');
+            table.innerHTML = '';
+            for (const link of links) {
+                link.status = await checkStatus(link.url);
+                const row = document.createElement('tr');
+                row.innerHTML = `
+                    <td>${link.url}</td>
+                    <td class="status-${link.status === 'On' ? 'on' : 'off'}">${link.status}</td>
+                    <td><button onclick="deleteLink('${link.url}')">Remover</button></td>
+                `;
+                table.appendChild(row);
+            }
+        }
+
+        function addLink(event) {
+            event.preventDefault();
+            const url = document.getElementById('url').value;
+            if (url) {
+                links.push({ url, status: 'Checking' });
+                refreshLinks();
+            }
+            document.getElementById('url').value = '';
+        }
+
+        function deleteLink(url) {
+            const index = links.findIndex(link => link.url === url);
+            if (index !== -1) {
+                links.splice(index, 1);
+                refreshLinks();
+            }
+        }
+
+        document.getElementById('add-link-form').addEventListener('submit', addLink);
+    </script>
+</body>
+</html>
